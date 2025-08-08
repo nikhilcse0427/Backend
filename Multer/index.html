@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Form</title>
+  <style>
+    div {
+      height: 80vh;
+      width: 100vw;
+      border: solid black 5px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    button {
+      height: 45px;
+      width: 88px;
+      color: white;
+      background-color: rgb(17, 122, 192);
+      font-weight: bold;
+      font-size: medium;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <input type="file" name="profileImg" required />
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+</body>
+
+</html>
