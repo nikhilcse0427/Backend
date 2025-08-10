@@ -1,25 +1,47 @@
-import {v2 as cloudinary} from 'cloudinary'
-import fs from 'fs'
-cloudinary.config({
-  cloud_name:process.env.CLOUD_NAME,
-  api_key:process.env.API_KEY,
-  api_secret:process.env.API_SECRET
-})
+import dotenv from "dotenv"
+dotenv.config()
+import { v2 as cloudinary } from "cloudinary"
+import fs from "fs"
 
-// cloudinary.v2.uploader.unsigned_upload(file, upload_preset, options).then(callback);
+// Debug environment variables
+console.log("🔍 Environment Check:", {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "NOT FOUND",
+  api_key: process.env.CLOUDINARY_API_KEY || "NOT FOUND",
+  api_secret: process.env.CLOUDINARY_API_SECRET ? "FOUND" : "NOT FOUND"
+});
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const uploadOnCloudinary = async (localFilePath) => {
-  try{
+  try {
+    if (!localFilePath) {
+      console.log("❌ No file path provided");
+      return null;
+    }
+
+    console.log("📤 Uploading file:", localFilePath);
+    console.log("🔍 File exists:", fs.existsSync(localFilePath));
+
+    //upload the file on cloudinary
     const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: auto,
+      resource_type: "auto"
     })
-    console.log("File uploaded on cloudinary successfully", response.url)
-    return response
-  }catch(error){
+
+    console.log("✅ Upload successful:", response.url);
     fs.unlinkSync(localFilePath)
-    //remove the locally saved temp files as upload get failed
-    return null
+    return response;
+
+  } catch (error) {
+    console.error("❌ Upload failed:", error.message);
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath)
+    }
+    return null;
   }
 }
 
-export {uploadOnCloudinary}
+export { uploadOnCloudinary }
