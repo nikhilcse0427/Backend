@@ -15,7 +15,7 @@ const userSchema = new Schema({
     unique: true,
     lowercase: true,
     minlength: [5, "userName should contain atleast 8 characters"],
-    maxlength: [12, "username must not contain more than 24 characters"],
+    maxlength: [12, "username must not contain more than 12 characters"],
     index: true, //agr aapko searching karna hai to index true kardo ye searching easy bna deta hai
     trim: true,
     required: true
@@ -23,7 +23,7 @@ const userSchema = new Schema({
   email: {
     type: String,
     unique: true,
-    minlength: [8, "email should contain atleast 8 characters"],
+    minlength: [5, "email should contain atleast 8 characters"],
     maxlength: [24, "email must not contain more than 24 characters"],
     lowercase: true,
     trim: true,
@@ -32,9 +32,10 @@ const userSchema = new Schema({
   password: {
     type: String,
     minlength: [8, "password should contain atleast 8 characters"],
-    maxlength: [12, "password must not contain more than 24 characters"],
+    maxlength: [60, "password must not contain more than 60 characters"],
     required: [true, "password is required"]
   },
+
   avatar: {
     type: String,  //URL coming from Cloudinary
     required: true

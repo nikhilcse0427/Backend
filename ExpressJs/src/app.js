@@ -6,7 +6,6 @@ import morgan from 'morgan'
 import helmet from 'helmet'
 
 // Import error handlers
-import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js'
 
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
@@ -30,8 +29,5 @@ app.get('/', (req, res) => {
   res.send('API is working 🚀');
 });
 
-// Global error handlers (must be last)
-app.use(notFoundHandler);
-app.use(errorHandler);
 
 export default app
