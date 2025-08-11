@@ -193,23 +193,32 @@ const logoutUser = async (req, res, next) => {
   }
 }
 
-const refreshAcessToken = async (req, res) =>{
+const refreshAcessToken = async (req, res) => {
   // take refresh token from cookie or header
   // throw error if it is empty
   // jwt se decode karo
   try {
-    const incomingRefreshToken = req.cookies()?.refreshToken || req.body.refreshToken
-    if(!incomingRefreshToken){
-      throw new ApiError(401, "Unauthorized action")
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+    if (!incomingRefreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized action"
+      });
     }
 
-    const decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+    const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
     const user = await User.findById(decodedToken?._id)
-    if(!user){
-      throw new ApiError(401, "refresh token not valid")
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "refresh token not valid"
+      });
     }
-    if(incomingRefreshToken !== user.refreshToken){
-      throw new ApiError(401, "refrsh token is expired or used")
+    if (incomingRefreshToken !== user.refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "refresh token is expired or used"
+      });
     }
 
     const options = ({
@@ -217,16 +226,22 @@ const refreshAcessToken = async (req, res) =>{
       secure: true
     })
 
-    const { accessToken, newRefreshToken  } = await generateAccessAndRefreshToken(user._id)
-    res.status(200)
-    .cookie("accessToken", accessToken)
-    .cookie("refreshToken", refreshToken)
-    .json({
-      token : accessToken, refreshToken, newRefreshToken,
-      message: "rersh token refresh"
-    })
+    const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id)
+    return res.status(200)
+      .cookie("accessToken", accessToken)
+      .cookie("refreshToken", newRefreshToken)
+      .json({
+        success: true,
+        token: accessToken,
+        incomingRefreshToken,
+        newRefreshToken,
+        message: "refresh token refresh"
+      })
   } catch (error) {
-    throw new ApiError(401, error?.message || "Invalid refresh token")
+    return res.status(401).json({
+      success: false,
+      message: error?.message || "Invalid refresh token"
+    });
   }
 
 }
@@ -238,32 +253,55 @@ const changeCurrentPassword = async (req, res) => {
   // us password ko jwt se decode karo
   // old password age match kar rha ho db ke password se to db ke password ko replace kardo new password se
   // me data bhej do
- try {
-   const { oldPassword, newPassword } = req.body
-   const user = await User.findById(req.user._id)
-   if(!user){
-    throw new ApiError(201, "User does not exist")
-   }
-   if(!user.password === oldPassword){
-    throw new ApiError(400, "Invalid old password")
-   }
-   user.password = newPassword
-   await user.save({validationBeforeSave: false})
-   return res.status(200).json({
-    user: user,
-    message: "new password saved successfully"
-   })
- } catch (error) {
+  try {
+    const { oldPassword, newPassword } = req.body
+
+
+    const user = await User.findById(req.user._id)
+
+    if (!user) {
+      throw new ApiError(404, "User not found")
+    }
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+
+    if (!isPasswordCorrect) {
+      throw new ApiError(400, "Invalid old password")
+    }
+
+    user.password = newPassword
+    await user.save({ validateBeforeSave: false })
+
+    return res.status(200).json({
+      success: true,
+      user: user,
+      message: "new password saved successfully"
+    })
+  } catch (error) {
     throw new ApiError(401, "something went wrong while changing password")
- }
+  }
 }
 
 const getCurrentUser = async (req, res) => {
-  res.json(200).json({
-    user: req.user,
-    message: "current user got successfully"
-  })
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated"
+      });
+    }
 
+    return res.status(200).json({
+      success: true,
+      user: req.user,
+      message: "current user got successfully"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong"
+    });
+  }
 }
 
 export {
@@ -271,5 +309,6 @@ export {
   loginUser,
   logoutUser,
   refreshAcessToken,
-  changeCurrentPassword
+  changeCurrentPassword,
+  getCurrentUser
 }
